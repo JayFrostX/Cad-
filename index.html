@@ -318,7 +318,7 @@ const chatInput = document.getElementById("chatInput");
 const chatSend = document.getElementById("chatSend");
 
 // Random username per tab
-const username = "Officer" + Math.floor(Math.random() * 1000);
+let username = "Unknown";
 
 // Connect to WebSocket server
 const ws = new WebSocket(`ws://${window.location.hostname}:3000`);
