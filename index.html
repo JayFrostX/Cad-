@@ -3,8 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Police CAD System</title>
-<!-- Leaflet.js for map -->
+<title>Enhanced Police CAD</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <style>
@@ -18,6 +17,7 @@
   table { width: 100%; border-collapse: collapse; }
   th, td { border: 1px solid #ccc; padding: 5px; text-align: left; }
   #map { flex: 2; }
+  input.unitName { width: 80%; }
 </style>
 </head>
 <body>
@@ -41,6 +41,7 @@
 
   <div id="units" style="display:none;">
     <h3>Units</h3>
+    <button onclick="addUnit()">Add Unit</button>
     <table id="unitsTable">
       <thead><tr><th>ID</th><th>Name</th><th>Status</th></tr></thead>
       <tbody></tbody>
@@ -71,22 +72,44 @@ function showSection(section) {
 // Sample data
 let calls = [];
 let units = [
-  {id: 1, name: 'Unit 1', status: 'Available'},
-  {id: 2, name: 'Unit 2', status: 'Available'}
+  {id: 1, name: 'Unit 1', status: 'Available', lat: 39.7684, lng: -86.1581, marker: null},
+  {id: 2, name: 'Unit 2', status: 'Available', lat: 39.7700, lng: -86.1600, marker: null}
 ];
 let bolos = [];
 
-const map = L.map('map').setView([39.7684, -86.1581], 12); // Indianapolis default
+// Map setup
+const map = L.map('map').setView([39.7684, -86.1581], 13);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap contributors' }).addTo(map);
 
 // Functions
 function addCall() {
   const type = prompt("Enter call type (e.g., Traffic Stop, 911):");
-  const location = prompt("Enter location:");
+  const location = prompt("Enter location (address or coords as 'lat,lng'):");
   if(!type || !location) return;
+  let lat = 39.7684, lng = -86.1581;
+  if(location.includes(',')) {
+    const parts = location.split(',');
+    lat = parseFloat(parts[0]);
+    lng = parseFloat(parts[1]);
+  }
   const id = calls.length + 1;
-  calls.push({id, type, location, status: 'Dispatched', assigned: ''});
+  const call = {id, type, location, status: 'Dispatched', assigned: '', lat, lng, marker: null};
+  calls.push(call);
+  // Add map marker
+  call.marker = L.marker([lat, lng]).addTo(map).bindPopup(`Call #${id}: ${type}`);
   renderCalls();
+}
+
+function addUnit() {
+  const name = prompt("Enter unit name:");
+  if(!name) return;
+  const id = units.length + 1;
+  const lat = 39.7684 + Math.random()/100; // random nearby for demo
+  const lng = -86.1581 + Math.random()/100;
+  const marker = L.marker([lat, lng], {icon: L.icon({iconUrl: 'https://cdn-icons-png.flaticon.com/512/149/149071.png', iconSize: [25,25]})})
+                   .addTo(map).bindPopup(`Unit #${id}: ${name}`);
+  units.push({id, name, status: 'Available', lat, lng, marker});
+  renderUnits();
 }
 
 function assignUnit(callId) {
@@ -99,6 +122,8 @@ function assignUnit(callId) {
     unit.status = 'Busy';
     renderUnits();
     renderCalls();
+    // Move unit marker to call location
+    unit.marker.setLatLng([call.lat, call.lng]).bindPopup(`${unit.name} assigned to Call #${call.id}`).openPopup();
   }
 }
 
@@ -106,9 +131,20 @@ function closeCall(callId) {
   const call = calls.find(c => c.id == callId);
   call.status = 'Closed';
   const unit = units.find(u => u.name === call.assigned);
-  if(unit) unit.status = 'Available';
+  if(unit) {
+    unit.status = 'Available';
+    unit.marker.bindPopup(`${unit.name} is available`);
+  }
   renderUnits();
   renderCalls();
+}
+
+function addBolo() {
+  const description = prompt("Enter BOLO/Warrant description:");
+  if(!description) return;
+  const id = bolos.length + 1;
+  bolos.push({id, description, status: 'Active'});
+  renderBolos();
 }
 
 function renderCalls() {
@@ -128,17 +164,20 @@ function renderUnits() {
   tbody.innerHTML = '';
   units.forEach(u => {
     const row = document.createElement('tr');
-    row.innerHTML = `<td>${u.id}</td><td>${u.name}</td><td>${u.status}</td>`;
+    row.innerHTML = `<td>${u.id}</td>
+      <td><input class="unitName" value="${u.name}" onchange="changeUnitName(${u.id}, this.value)"></td>
+      <td>${u.status}</td>`;
     tbody.appendChild(row);
   });
 }
 
-function addBolo() {
-  const description = prompt("Enter BOLO/Warrant description:");
-  if(!description) return;
-  const id = bolos.length + 1;
-  bolos.push({id, description, status: 'Active'});
-  renderBolos();
+function changeUnitName(id, newName) {
+  const unit = units.find(u => u.id === id);
+  if(unit) {
+    unit.name = newName;
+    if(unit.marker) unit.marker.bindPopup(`${unit.name}`).openPopup();
+    renderCalls();
+  }
 }
 
 function renderBolos() {
