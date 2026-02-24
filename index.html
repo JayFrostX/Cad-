@@ -250,7 +250,7 @@ function addWarrant() {
 
 function deleteWarrant(id){warrants=warrants.filter(w=>w.id!==id);renderWarrants();}
 
-// ---------------- Browser-Only Group Chat ----------------
+// ---------------- WebSocket Chat ----------------
 const chatMessages = document.getElementById("chatMessages");
 const chatInput = document.getElementById("chatInput");
 const chatSend = document.getElementById("chatSend");
@@ -258,14 +258,19 @@ const chatSend = document.getElementById("chatSend");
 // Random username per tab
 const username = "Officer" + Math.floor(Math.random() * 1000);
 
-// Load messages from localStorage
-function loadMessages() {
-  const messages = JSON.parse(localStorage.getItem("chatMessages") || "[]");
-  chatMessages.innerHTML = '';
-  messages.forEach(m => addMessageToDOM(m.sender, m.text));
-}
+// Connect to WebSocket server
+const ws = new WebSocket(`ws://${window.location.hostname}:3000`);
 
-function addMessageToDOM(sender, text) {
+ws.onmessage = (event) => {
+  try {
+    const data = JSON.parse(event.data);
+    if(data.type === 'chat') {
+      addMessage(data.sender, data.text);
+    }
+  } catch (err) { console.error(err); }
+};
+
+function addMessage(sender, text) {
   const message = document.createElement("div");
   message.classList.add("message");
   if(sender === username) message.classList.add("user");
@@ -274,31 +279,16 @@ function addMessageToDOM(sender, text) {
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
-// Send message
 chatSend.addEventListener("click", () => {
   const text = chatInput.value.trim();
   if(!text) return;
-
-  const messages = JSON.parse(localStorage.getItem("chatMessages") || "[]");
-  const msg = {sender: username, text, timestamp: Date.now()};
-  messages.push(msg);
-  localStorage.setItem("chatMessages", JSON.stringify(messages));
-  addMessageToDOM(username, text);
+  ws.send(JSON.stringify({ type:'chat', sender: username, text }));
   chatInput.value = "";
 });
 
-// Enter key
 chatInput.addEventListener("keydown", (e)=>{
-  if(e.key==="Enter") chatSend.click();
+  if(e.key === "Enter") chatSend.click();
 });
-
-// Update chat across tabs
-window.addEventListener("storage", (e) => {
-  if(e.key === "chatMessages") loadMessages();
-});
-
-// Initial load
-window.addEventListener("load", () => loadMessages());
 </script>
 </body>
 </html>
