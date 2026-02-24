@@ -13,7 +13,7 @@
   #sidebar button { margin: 5px 0; padding: 10px; border: none; background: #34495e; color: white; cursor: pointer; }
   #sidebar button:hover { background: #1abc9c; }
   #main { flex: 1; display: flex; flex-direction: column; }
-  #calls, #units, #bolos { flex: 1; overflow-y: auto; padding: 10px; border-bottom: 1px solid #ccc; }
+  #calls, #units, #bolos, #arrests, #warrants { flex: 1; overflow-y: auto; padding: 10px; border-bottom: 1px solid #ccc; }
   table { width: 100%; border-collapse: collapse; }
   th, td { border: 1px solid #ccc; padding: 5px; text-align: left; }
   #map { flex: 2; }
@@ -55,6 +55,8 @@
   <button onclick="showSection('calls')">Calls</button>
   <button onclick="showSection('units')">Units</button>
   <button onclick="showSection('bolos')">BOLOs</button>
+  <button onclick="showSection('arrests')">Arrests</button>
+  <button onclick="showSection('warrants')">Warrants</button>
 </div>
 
 <div id="main">
@@ -80,7 +82,25 @@
     <h3>BOLOs / Warrants</h3>
     <button onclick="addBolo()">Add BOLO</button>
     <table id="bolosTable">
-      <thead><tr><th>ID</th><th>Description</th><th>Status</th></tr></thead>
+      <thead><tr><th>ID</th><th>Description</th><th>Status</th><th>Action</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div id="arrests" style="display:none;">
+    <h3>Arrests</h3>
+    <button onclick="addArrest()">Add Arrest</button>
+    <table id="arrestsTable">
+      <thead><tr><th>ID</th><th>Name</th><th>Reason</th><th>Action</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div id="warrants" style="display:none;">
+    <h3>Arrest Warrants</h3>
+    <button onclick="addWarrant()">Add Warrant</button>
+    <table id="warrantsTable">
+      <thead><tr><th>ID</th><th>Name</th><th>Reason</th><th>Action</th></tr></thead>
       <tbody></tbody>
     </table>
   </div>
@@ -95,24 +115,28 @@
 </div>
 
 <script>
-// ---------------- CAD Functions ----------------
+// ---------------- Sections ----------------
 function showSection(section) {
-  document.getElementById('calls').style.display = 'none';
-  document.getElementById('units').style.display = 'none';
-  document.getElementById('bolos').style.display = 'none';
+  const sections = ['calls','units','bolos','arrests','warrants'];
+  sections.forEach(s => document.getElementById(s).style.display = 'none');
   document.getElementById(section).style.display = 'block';
 }
 
+// ---------------- Data ----------------
 let calls = [];
 let units = [
   {id: 1, name: 'Unit 1', status: 'Available', lat: 39.7684, lng: -86.1581, marker: null},
   {id: 2, name: 'Unit 2', status: 'Available', lat: 39.7700, lng: -86.1600, marker: null}
 ];
 let bolos = [];
+let arrests = [];
+let warrants = [];
 
+// ---------------- Map ----------------
 const map = L.map('map').setView([39.7684, -86.1581], 13);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap contributors' }).addTo(map);
 
+// ---------------- Calls ----------------
 function addCall() {
   const type = prompt("Enter call type (e.g., Traffic Stop, 911):");
   const location = prompt("Enter location (address or coords as 'lat,lng'):");
@@ -130,6 +154,19 @@ function addCall() {
   renderCalls();
 }
 
+function renderCalls() {
+  const tbody = document.querySelector('#callsTable tbody');
+  tbody.innerHTML = '';
+  calls.forEach(c => {
+    const row = document.createElement('tr');
+    row.innerHTML = `<td>${c.id}</td><td>${c.type}</td><td>${c.location}</td><td>${c.status}</td>
+      <td>${c.assigned || '<button onclick="assignUnit('+c.id+')">Assign</button>'}</td>
+      <td><button onclick="closeCall(${c.id})">Close</button></td>`;
+    tbody.appendChild(row);
+  });
+}
+
+// ---------------- Units ----------------
 function addUnit() {
   const name = prompt("Enter unit name:");
   if(!name) return;
@@ -140,49 +177,6 @@ function addUnit() {
                    .addTo(map).bindPopup(`Unit #${id}: ${name}`);
   units.push({id, name, status: 'Available', lat, lng, marker});
   renderUnits();
-}
-
-function assignUnit(callId) {
-  const unitId = prompt("Enter Unit ID to assign:");
-  const unit = units.find(u => u.id == unitId);
-  if(unit) {
-    const call = calls.find(c => c.id == callId);
-    call.assigned = unit.name;
-    call.status = 'En Route';
-    unit.status = 'Busy';
-    renderUnits();
-    renderCalls();
-    unit.marker.setLatLng([call.lat, call.lng]).bindPopup(`${unit.name} assigned to Call #${call.id}`).openPopup();
-  }
-}
-
-function closeCall(callId) {
-  const call = calls.find(c => c.id == callId);
-  call.status = 'Closed';
-  const unit = units.find(u => u.name === call.assigned);
-  if(unit) { unit.status = 'Available'; unit.marker.bindPopup(`${unit.name} is available`); }
-  renderUnits();
-  renderCalls();
-}
-
-function addBolo() {
-  const description = prompt("Enter BOLO/Warrant description:");
-  if(!description) return;
-  const id = bolos.length + 1;
-  bolos.push({id, description, status: 'Active'});
-  renderBolos();
-}
-
-function renderCalls() {
-  const tbody = document.querySelector('#callsTable tbody');
-  tbody.innerHTML = '';
-  calls.forEach(c => {
-    const row = document.createElement('tr');
-    row.innerHTML = `<td>${c.id}</td><td>${c.type}</td><td>${c.location}</td><td>${c.status}</td>
-    <td>${c.assigned || '<button onclick="assignUnit('+c.id+')">Assign</button>'}</td>
-    <td><button onclick="closeCall(${c.id})">Close</button></td>`;
-    tbody.appendChild(row);
-  });
 }
 
 function renderUnits() {
@@ -202,20 +196,84 @@ function changeUnitName(id, newName) {
   if(unit) { unit.name = newName; if(unit.marker) unit.marker.bindPopup(`${unit.name}`).openPopup(); renderCalls(); }
 }
 
+// ---------------- BOLOs ----------------
+function addBolo() {
+  const description = prompt("Enter BOLO/Warrant description:");
+  if(!description) return;
+  const id = bolos.length + 1;
+  bolos.push({id, description, status: 'Active'});
+  renderBolos();
+}
+
+function deleteBolo(id) {
+  bolos = bolos.filter(b => b.id !== id);
+  renderBolos();
+}
+
 function renderBolos() {
   const tbody = document.querySelector('#bolosTable tbody');
   tbody.innerHTML = '';
   bolos.forEach(b => {
     const row = document.createElement('tr');
-    row.innerHTML = `<td>${b.id}</td><td>${b.description}</td><td>${b.status}</td>`;
+    row.innerHTML = `<td>${b.id}</td><td>${b.description}</td><td>${b.status}</td>
+      <td><button onclick="deleteBolo(${b.id})">Delete</button></td>`;
     tbody.appendChild(row);
   });
 }
 
-// Initial render
-renderCalls(); renderUnits(); renderBolos();
+// ---------------- Arrests ----------------
+function addArrest() {
+  const name = prompt("Enter name of arrested person:");
+  const reason = prompt("Enter reason for arrest:");
+  if(!name || !reason) return;
+  const id = arrests.length + 1;
+  arrests.push({id, name, reason});
+  renderArrests();
+}
 
-// ---------------- AI Officer Chat with OpenAI ----------------
+function deleteArrest(id) {
+  arrests = arrests.filter(a => a.id !== id);
+  renderArrests();
+}
+
+function renderArrests() {
+  const tbody = document.querySelector('#arrestsTable tbody');
+  tbody.innerHTML = '';
+  arrests.forEach(a => {
+    const row = document.createElement('tr');
+    row.innerHTML = `<td>${a.id}</td><td>${a.name}</td><td>${a.reason}</td>
+      <td><button onclick="deleteArrest(${a.id})">Delete</button></td>`;
+    tbody.appendChild(row);
+  });
+}
+
+// ---------------- Warrants ----------------
+function addWarrant() {
+  const name = prompt("Enter name for warrant:");
+  const reason = prompt("Enter reason for warrant:");
+  if(!name || !reason) return;
+  const id = warrants.length + 1;
+  warrants.push({id, name, reason});
+  renderWarrants();
+}
+
+function deleteWarrant(id) {
+  warrants = warrants.filter(w => w.id !== id);
+  renderWarrants();
+}
+
+function renderWarrants() {
+  const tbody = document.querySelector('#warrantsTable tbody');
+  tbody.innerHTML = '';
+  warrants.forEach(w => {
+    const row = document.createElement('tr');
+    row.innerHTML = `<td>${w.id}</td><td>${w.name}</td><td>${w.reason}</td>
+      <td><button onclick="deleteWarrant(${w.id})">Delete</button></td>`;
+    tbody.appendChild(row);
+  });
+}
+
+// ---------------- AI Officer Chat ----------------
 const chatMessages = document.getElementById("chatMessages");
 const chatInput = document.getElementById("chatInput");
 
@@ -229,13 +287,13 @@ function addMessage(sender, text) {
 async function aiResponse(userMessage) {
     addMessage("AI Officer", "Typing...");
     try {
-        const res = await fetch("http://localhost:3000/ai-chat", { // update if hosted
+        const res = await fetch("http://localhost:3000/ai-chat", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ message: userMessage })
         });
         const data = await res.json();
-        chatMessages.lastChild.remove(); // remove "Typing..."
+        chatMessages.lastChild.remove();
         addMessage("AI Officer", data.reply);
     } catch (err) {
         chatMessages.lastChild.remove();
@@ -252,6 +310,13 @@ chatInput.addEventListener("keydown", (e) => {
         aiResponse(userText);
     }
 });
+
+// ---------------- Initial Render ----------------
+renderCalls();
+renderUnits();
+renderBolos();
+renderArrests();
+renderWarrants();
 </script>
 </body>
 </html>
