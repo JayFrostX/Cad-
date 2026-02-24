@@ -1,247 +1,292 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Police CAD v3</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ultimate Police CAD</title>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js"></script>
 
 <style>
-body {
-  margin:0;
-  font-family:Segoe UI;
-  background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);
-  color:white;
-  display:flex;
-  height:100vh;
-}
-
-.glass {
-  background:rgba(255,255,255,0.08);
-  backdrop-filter:blur(10px);
-  border-radius:12px;
-  padding:10px;
-}
-
-#sidebar {
-  width:220px;
-  padding:10px;
-}
-
+body { margin:0; font-family:Arial; display:flex; height:100vh; }
+#sidebar { width:260px; background:#1f2a38; color:white; padding:15px; }
+#sidebar h2 { margin-top:0; }
 #sidebar button {
-  width:100%;
-  padding:10px;
-  margin:5px 0;
-  border:none;
-  border-radius:8px;
-  background:#1abc9c;
-  color:white;
-  cursor:pointer;
+  width:100%; margin:5px 0; padding:10px;
+  border:none; background:#2c3e50; color:white;
+  cursor:pointer; border-radius:4px;
 }
+#sidebar button:hover { background:#1abc9c; }
 
-#main {
-  flex:1;
+#main { flex:1; display:flex; flex-direction:column; }
+.section { flex:1; overflow:auto; padding:10px; display:none; }
+.section.active { display:block; }
+
+table { width:100%; border-collapse:collapse; }
+th, td { border:1px solid #ccc; padding:6px; }
+
+.status-Available { color:limegreen; font-weight:bold; }
+.status-Busy { color:orange; font-weight:bold; }
+.status-Closed { color:red; font-weight:bold; }
+
+/* CHAT */
+#chatContainer {
+  height:50%;
   display:flex;
   flex-direction:column;
-  padding:10px;
-}
-
-.section {
-  flex:1;
-  display:none;
-  overflow:auto;
-}
-
-table {
-  width:100%;
-  border-collapse:collapse;
-}
-td, th {
-  padding:6px;
-  border-bottom:1px solid rgba(255,255,255,0.1);
-}
-
-.status-available { color:#2ecc71; }
-.status-enroute { color:#f1c40f; }
-.status-onscene { color:#3498db; }
-.status-busy { color:#e74c3c; }
-
-#chat {
-  height:200px;
-  display:flex;
-  flex-direction:column;
-  margin-top:10px;
+  border-top:2px solid #ccc;
 }
 #messages {
   flex:1;
-  overflow:auto;
+  overflow-y:auto;
+  padding:10px;
+  background:#f4f4f4;
 }
 .message {
-  margin:4px 0;
+  margin-bottom:8px;
+}
+#chatInputArea {
+  display:flex;
+  border-top:1px solid #ccc;
+}
+#username, #chatInput {
+  padding:10px;
+  border:none;
+  outline:none;
+}
+#username { width:150px; border-right:1px solid #ccc; }
+#chatInput { flex:1; }
+#sendBtn {
+  padding:10px 15px;
+  border:none;
+  background:#1abc9c;
+  color:white;
+  cursor:pointer;
 }
 </style>
 </head>
 <body>
 
-<div id="sidebar" class="glass">
-  <h3>Police CAD</h3>
+<div id="sidebar">
+  <h2>Ultimate CAD</h2>
   <button onclick="showSection('calls')">Calls</button>
   <button onclick="showSection('units')">Units</button>
+  <button onclick="showSection('bolos')">BOLOs</button>
 </div>
 
 <div id="main">
 
-<div id="calls" class="section glass">
-  <h3>Active Calls</h3>
-  <button onclick="addCall()">Add Call</button>
-  <table>
-    <thead>
-      <tr><th>ID</th><th>Type</th><th>Location</th><th>Assigned Unit</th></tr>
-    </thead>
-    <tbody id="callsBody"></tbody>
-  </table>
-</div>
-
-<div id="units" class="section glass">
-  <h3>Units</h3>
-  <button onclick="addUnit()">Add Unit</button>
-  <table>
-    <thead>
-      <tr><th>ID</th><th>Name</th><th>Status</th></tr>
-    </thead>
-    <tbody id="unitsBody"></tbody>
-  </table>
-</div>
-
-<div id="chat" class="glass">
-  <div id="messages"></div>
-  <div>
-    <input id="chatInput" placeholder="Message..." />
-    <button onclick="sendMessage()">Send</button>
+  <div id="calls" class="section active">
+    <h3>Active Calls</h3>
+    <button onclick="addCall()">Add Call</button>
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th><th>Type</th><th>Location</th>
+          <th>Status</th><th>Assigned</th><th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="callsBody"></tbody>
+    </table>
   </div>
-</div>
+
+  <div id="units" class="section">
+    <h3>Units</h3>
+    <button onclick="addUnit()">Add Unit</button>
+    <table>
+      <thead>
+        <tr><th>ID</th><th>Name</th><th>Status</th></tr>
+      </thead>
+      <tbody id="unitsBody"></tbody>
+    </table>
+  </div>
+
+  <div id="bolos" class="section">
+    <h3>BOLO / Warrants</h3>
+    <button onclick="addBolo()">Add BOLO</button>
+    <table>
+      <thead>
+        <tr><th>ID</th><th>Description</th><th>Status</th></tr>
+      </thead>
+      <tbody id="bolosBody"></tbody>
+    </table>
+  </div>
+
+  <!-- COMMUNITY CHAT (replaces map) -->
+  <div id="chatContainer">
+    <div id="messages"></div>
+    <div id="chatInputArea">
+      <input id="username" placeholder="Username">
+      <input id="chatInput" placeholder="Type message...">
+      <button id="sendBtn">Send</button>
+    </div>
+  </div>
 
 </div>
 
 <script type="module">
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, addDoc, onSnapshot, updateDoc, doc } 
-from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-import { getAuth, signInAnonymously } 
-from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+/* ================= FIREBASE SETUP ================= */
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAtbzUhg8vT040z9iNEakF_kqEvr7YkPM4",
-  authDomain: "police-cad-86ba9.firebaseapp.com",
-  projectId: "police-cad-86ba9",
-  storageBucket: "police-cad-86ba9.appspot.com",
-  messagingSenderId: "687205548242",
-  appId: "1:687205548242:web:978717f8cf88e239fded0b"
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT.firebaseapp.com",
+  databaseURL: "https://YOUR_PROJECT.firebaseio.com",
+  projectId: "YOUR_PROJECT",
+  storageBucket: "YOUR_PROJECT.appspot.com",
+  messagingSenderId: "XXXX",
+  appId: "XXXX"
 };
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, push, onChildAdded } 
+from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const auth = getAuth(app);
+const db = getDatabase(app);
 
-await signInAnonymously(auth);
+/* ================= CAD SYSTEM ================= */
 
-/* Section Switching */
-window.showSection = function(id){
-  document.querySelectorAll(".section").forEach(s=>s.style.display="none");
-  document.getElementById(id).style.display="block";
+function showSection(id){
+  document.querySelectorAll(".section").forEach(s=>s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+}
+window.showSection = showSection;
+
+let calls = [];
+let units = [];
+let bolos = [];
+
+window.addCall = function(){
+  const type = prompt("Call Type:");
+  const location = prompt("Location:");
+  if(!type || !location) return;
+
+  calls.push({
+    id: Date.now(),
+    type,
+    location,
+    status:"Active",
+    assigned:null
+  });
+  renderCalls();
 };
-showSection("calls");
 
-/* REAL-TIME LISTENERS */
+window.assignUnit = function(callId){
+  const unitId = prompt("Enter Unit ID:");
+  const unit = units.find(u=>u.id==unitId);
+  const call = calls.find(c=>c.id==callId);
+  if(!unit || !call) return;
 
-onSnapshot(collection(db,"calls"), snapshot=>{
+  unit.status="Busy";
+  call.status="En Route";
+  call.assigned=unit.name;
+  renderUnits();
+  renderCalls();
+};
+
+window.closeCall = function(callId){
+  const call = calls.find(c=>c.id==callId);
+  if(!call) return;
+
+  call.status="Closed";
+  if(call.assigned){
+    const unit = units.find(u=>u.name==call.assigned);
+    if(unit) unit.status="Available";
+  }
+  renderUnits();
+  renderCalls();
+};
+
+function renderCalls(){
   const body=document.getElementById("callsBody");
   body.innerHTML="";
-  snapshot.forEach(docSnap=>{
-    const c=docSnap.data();
-    body.innerHTML+=`
-      <tr ondragover="event.preventDefault()" 
-          ondrop="assignUnit(event,'${docSnap.id}')">
-        <td>${docSnap.id}</td>
+  calls.forEach(c=>{
+    body.innerHTML += `
+      <tr>
+        <td>${c.id}</td>
         <td>${c.type}</td>
         <td>${c.location}</td>
-        <td>${c.assigned||"None"}</td>
+        <td>${c.status}</td>
+        <td>${c.assigned || `<button onclick="assignUnit(${c.id})">Assign</button>`}</td>
+        <td><button onclick="closeCall(${c.id})">Close</button></td>
       </tr>`;
   });
-});
+}
 
-onSnapshot(collection(db,"units"), snapshot=>{
+window.addUnit = function(){
+  const name = prompt("Unit Name:");
+  if(!name) return;
+  units.push({id:Date.now(), name, status:"Available"});
+  renderUnits();
+};
+
+function renderUnits(){
   const body=document.getElementById("unitsBody");
   body.innerHTML="";
-  snapshot.forEach(docSnap=>{
-    const u=docSnap.data();
-    body.innerHTML+=`
-      <tr draggable="true" 
-          ondragstart="dragUnit(event,'${docSnap.id}')">
-        <td>${docSnap.id}</td>
+  units.forEach(u=>{
+    body.innerHTML += `
+      <tr>
+        <td>${u.id}</td>
         <td>${u.name}</td>
-        <td class="status-${u.status}">${u.status}</td>
+        <td>${u.status}</td>
       </tr>`;
   });
+}
+
+window.addBolo = function(){
+  const desc = prompt("BOLO Description:");
+  if(!desc) return;
+  bolos.push({id:Date.now(), description:desc, status:"Active"});
+  renderBolos();
+};
+
+function renderBolos(){
+  const body=document.getElementById("bolosBody");
+  body.innerHTML="";
+  bolos.forEach(b=>{
+    body.innerHTML += `
+      <tr>
+        <td>${b.id}</td>
+        <td>${b.description}</td>
+        <td>${b.status}</td>
+      </tr>`;
+  });
+}
+
+/* ================= COMMUNITY CHAT ================= */
+
+const messagesRef = ref(db, "communityChat");
+const messagesDiv = document.getElementById("messages");
+
+document.getElementById("sendBtn").addEventListener("click", sendMessage);
+document.getElementById("chatInput").addEventListener("keydown", e=>{
+  if(e.key==="Enter") sendMessage();
 });
 
-/* Add Data */
+function sendMessage(){
+  const username = document.getElementById("username").value || "Guest";
+  const text = document.getElementById("chatInput").value.trim();
+  if(!text) return;
 
-window.addCall = async function(){
-  const type=prompt("Call Type");
-  const location=prompt("Location");
-  if(!type||!location) return;
-  await addDoc(collection(db,"calls"),{
-    type,location,assigned:null
-  });
-};
-
-window.addUnit = async function(){
-  const name=prompt("Unit Name");
-  if(!name) return;
-  await addDoc(collection(db,"units"),{
-    name,status:"available"
-  });
-};
-
-/* Drag & Assign */
-
-window.dragUnit = function(e,id){
-  e.dataTransfer.setData("unitId",id);
-};
-
-window.assignUnit = async function(e,callId){
-  e.preventDefault();
-  const unitId=e.dataTransfer.getData("unitId");
-
-  await updateDoc(doc(db,"calls",callId),{
-    assigned:unitId
+  push(messagesRef, {
+    user: username,
+    message: text,
+    time: Date.now()
   });
 
-  await updateDoc(doc(db,"units",unitId),{
-    status:"enroute"
-  });
-};
+  document.getElementById("chatInput").value="";
+}
 
-/* Live Chat */
-
-onSnapshot(collection(db,"chat"), snapshot=>{
-  const container=document.getElementById("messages");
-  container.innerHTML="";
-  snapshot.forEach(docSnap=>{
-    const m=docSnap.data();
-    container.innerHTML+=`<div class="message">${m.text}</div>`;
-  });
+onChildAdded(messagesRef, snapshot=>{
+  const data = snapshot.val();
+  const div = document.createElement("div");
+  div.className="message";
+  div.innerHTML = `<b>${data.user}:</b> ${data.message}`;
+  messagesDiv.appendChild(div);
+  messagesDiv.scrollTop = messagesDiv.scrollHeight;
 });
-
-window.sendMessage = async function(){
-  const input=document.getElementById("chatInput");
-  if(!input.value.trim()) return;
-  await addDoc(collection(db,"chat"),{
-    text:input.value
-  });
-  input.value="";
-};
 
 </script>
 </body>
