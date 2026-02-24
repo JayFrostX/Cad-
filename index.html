@@ -110,18 +110,31 @@ button.action:hover {
 <body>
 
 <!-- LOGIN -->
-<div id="loginScreen">
-    <div class="card">
-        <h2>CAD Login</h2>
-        <input id="username" placeholder="Username"><br>
-        <select id="role">
-            <option value="Dispatcher">Dispatcher</option>
-            <option value="Officer">Officer</option>
-            <option value="Supervisor">Supervisor</option>
-        </select><br>
-        <button class="action" onclick="login()">Login</button>
-    </div>
-</div>
+function login() {
+    let usernameInput = document.getElementById("username");
+
+    if (!usernameInput) {
+        alert("Username field not found. Check the input ID.");
+        return;
+    }
+
+    let name = usernameInput.value.trim();
+    let role = document.getElementById("role").value;
+
+    if (name === "") {
+        alert("Please enter a username.");
+        return;
+    }
+
+    currentUser = { name, role };
+
+    document.getElementById("loginScreen").classList.add("hidden");
+    document.getElementById("app").classList.remove("hidden");
+    document.getElementById("userInfo").innerText = name + " (" + role + ")";
+
+    log(name + " logged in");
+    renderAll();
+}
 
 <!-- APP -->
 <div id="app" class="hidden">
