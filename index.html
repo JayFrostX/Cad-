@@ -18,6 +18,34 @@
   th, td { border: 1px solid #ccc; padding: 5px; text-align: left; }
   #map { flex: 2; }
   input.unitName { width: 80%; }
+
+  /* AI Chat Styles */
+  #aiChatContainer {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 300px;
+    height: 400px;
+    background: #1a1a1a;
+    color: white;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 0 10px #000;
+    z-index: 1000;
+  }
+  #chatMessages { flex: 1; padding: 10px; overflow-y: auto; font-size: 14px; }
+  #chatMessages div { margin-bottom: 8px; }
+  #chatInput {
+    border: none;
+    padding: 10px;
+    outline: none;
+    width: 100%;
+    box-sizing: border-box;
+    background: #111;
+    color: white;
+  }
 </style>
 </head>
 <body>
@@ -60,8 +88,14 @@
   <div id="map"></div>
 </div>
 
+<!-- AI Officer Chat -->
+<div id="aiChatContainer">
+  <div id="chatMessages"></div>
+  <input id="chatInput" type="text" placeholder="Talk to AI Officer...">
+</div>
+
 <script>
-// Sections
+// ---------------- CAD Functions ----------------
 function showSection(section) {
   document.getElementById('calls').style.display = 'none';
   document.getElementById('units').style.display = 'none';
@@ -69,7 +103,6 @@ function showSection(section) {
   document.getElementById(section).style.display = 'block';
 }
 
-// Sample data
 let calls = [];
 let units = [
   {id: 1, name: 'Unit 1', status: 'Available', lat: 39.7684, lng: -86.1581, marker: null},
@@ -77,11 +110,9 @@ let units = [
 ];
 let bolos = [];
 
-// Map setup
 const map = L.map('map').setView([39.7684, -86.1581], 13);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap contributors' }).addTo(map);
 
-// Functions
 function addCall() {
   const type = prompt("Enter call type (e.g., Traffic Stop, 911):");
   const location = prompt("Enter location (address or coords as 'lat,lng'):");
@@ -95,7 +126,6 @@ function addCall() {
   const id = calls.length + 1;
   const call = {id, type, location, status: 'Dispatched', assigned: '', lat, lng, marker: null};
   calls.push(call);
-  // Add map marker
   call.marker = L.marker([lat, lng]).addTo(map).bindPopup(`Call #${id}: ${type}`);
   renderCalls();
 }
@@ -104,7 +134,7 @@ function addUnit() {
   const name = prompt("Enter unit name:");
   if(!name) return;
   const id = units.length + 1;
-  const lat = 39.7684 + Math.random()/100; // random nearby for demo
+  const lat = 39.7684 + Math.random()/100;
   const lng = -86.1581 + Math.random()/100;
   const marker = L.marker([lat, lng], {icon: L.icon({iconUrl: 'https://cdn-icons-png.flaticon.com/512/149/149071.png', iconSize: [25,25]})})
                    .addTo(map).bindPopup(`Unit #${id}: ${name}`);
@@ -122,7 +152,6 @@ function assignUnit(callId) {
     unit.status = 'Busy';
     renderUnits();
     renderCalls();
-    // Move unit marker to call location
     unit.marker.setLatLng([call.lat, call.lng]).bindPopup(`${unit.name} assigned to Call #${call.id}`).openPopup();
   }
 }
@@ -131,10 +160,7 @@ function closeCall(callId) {
   const call = calls.find(c => c.id == callId);
   call.status = 'Closed';
   const unit = units.find(u => u.name === call.assigned);
-  if(unit) {
-    unit.status = 'Available';
-    unit.marker.bindPopup(`${unit.name} is available`);
-  }
+  if(unit) { unit.status = 'Available'; unit.marker.bindPopup(`${unit.name} is available`); }
   renderUnits();
   renderCalls();
 }
@@ -173,11 +199,7 @@ function renderUnits() {
 
 function changeUnitName(id, newName) {
   const unit = units.find(u => u.id === id);
-  if(unit) {
-    unit.name = newName;
-    if(unit.marker) unit.marker.bindPopup(`${unit.name}`).openPopup();
-    renderCalls();
-  }
+  if(unit) { unit.name = newName; if(unit.marker) unit.marker.bindPopup(`${unit.name}`).openPopup(); renderCalls(); }
 }
 
 function renderBolos() {
@@ -191,10 +213,45 @@ function renderBolos() {
 }
 
 // Initial render
-renderCalls();
-renderUnits();
-renderBolos();
-</script>
+renderCalls(); renderUnits(); renderBolos();
 
+// ---------------- AI Officer Chat with OpenAI ----------------
+const chatMessages = document.getElementById("chatMessages");
+const chatInput = document.getElementById("chatInput");
+
+function addMessage(sender, text) {
+    const message = document.createElement("div");
+    message.innerHTML = `<b>${sender}:</b> ${text}`;
+    chatMessages.appendChild(message);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+async function aiResponse(userMessage) {
+    addMessage("AI Officer", "Typing...");
+    try {
+        const res = await fetch("http://localhost:3000/ai-chat", { // update if hosted
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ message: userMessage })
+        });
+        const data = await res.json();
+        chatMessages.lastChild.remove(); // remove "Typing..."
+        addMessage("AI Officer", data.reply);
+    } catch (err) {
+        chatMessages.lastChild.remove();
+        addMessage("AI Officer", "Error connecting to AI.");
+        console.error(err);
+    }
+}
+
+chatInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && chatInput.value.trim() !== "") {
+        const userText = chatInput.value.trim();
+        addMessage("You", userText);
+        chatInput.value = "";
+        aiResponse(userText);
+    }
+});
+</script>
 </body>
 </html>
