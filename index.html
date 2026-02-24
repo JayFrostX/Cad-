@@ -1,238 +1,393 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RP CAD System</title>
+<title>Professional CAD Training System</title>
 
 <style>
 body {
     margin: 0;
-    font-family: Arial, sans-serif;
-    background: #0b1220;
+    font-family: Arial;
+    background: #0f172a;
     color: #e5e7eb;
 }
 
-/* Header */
-header {
+/* Top Bar */
+.topbar {
     background: #111827;
-    padding: 15px 20px;
+    padding: 10px 20px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 2px solid #1f2937;
+    border-bottom: 1px solid #1f2937;
 }
 
-header h1 {
-    margin: 0;
-    font-size: 20px;
-}
-
-.user-info {
-    font-size: 14px;
-    color: #9ca3af;
-}
-
-/* Layout */
 .layout {
     display: flex;
-    height: calc(100vh - 60px);
+    height: calc(100vh - 50px);
 }
 
 /* Sidebar */
 .sidebar {
     width: 220px;
     background: #020617;
-    padding-top: 20px;
-    border-right: 1px solid #1f2937;
+    display: flex;
+    flex-direction: column;
 }
 
-.sidebar a {
-    display: block;
-    padding: 12px 20px;
-    color: #d1d5db;
-    text-decoration: none;
-    font-weight: bold;
+.sidebar button {
+    background: none;
+    border: none;
+    color: white;
+    padding: 12px;
+    text-align: left;
+    cursor: pointer;
 }
 
-.sidebar a:hover {
+.sidebar button:hover {
     background: #1f2937;
 }
 
-/* Main Content */
+/* Main */
 .main {
     flex: 1;
     padding: 20px;
-    overflow-y: auto;
+    overflow: auto;
 }
 
-/* Cards */
 .card {
     background: #111827;
     padding: 15px;
-    margin-bottom: 20px;
-    border-radius: 8px;
-    box-shadow: 0 0 10px rgba(0,0,0,0.4);
+    margin-bottom: 15px;
+    border-radius: 6px;
 }
 
-.card h2 {
-    margin-top: 0;
-    font-size: 18px;
-    border-bottom: 1px solid #1f2937;
-    padding-bottom: 8px;
-}
+.hidden { display: none; }
 
-/* Tables */
 table {
     width: 100%;
     border-collapse: collapse;
-    margin-top: 10px;
 }
 
 th, td {
-    padding: 10px;
-    text-align: left;
+    padding: 8px;
     border-bottom: 1px solid #1f2937;
 }
 
-.status-available { color: #22c55e; }
-.status-busy { color: #f59e0b; }
-.status-offline { color: #ef4444; }
+.priority-high { color: #ef4444; }
+.priority-medium { color: #f59e0b; }
+.priority-low { color: #22c55e; }
 
-/* Buttons */
-.button {
-    padding: 8px 14px;
-    background: #2563eb;
-    border: none;
-    border-radius: 4px;
-    color: white;
-    cursor: pointer;
-    font-weight: bold;
-}
-
-.button:hover {
-    background: #1d4ed8;
-}
-
-/* Search */
-input {
-    padding: 8px;
-    margin-top: 8px;
-    width: 100%;
+input, select {
+    padding: 6px;
+    margin: 5px;
     background: #020617;
     border: 1px solid #1f2937;
     color: white;
-    border-radius: 4px;
+}
+
+button.action {
+    background: #2563eb;
+    border: none;
+    padding: 6px 10px;
+    color: white;
+    cursor: pointer;
+}
+
+button.action:hover {
+    background: #1d4ed8;
+}
+
+/* Login */
+#loginScreen {
+    display: flex;
+    height: 100vh;
+    justify-content: center;
+    align-items: center;
 }
 </style>
 </head>
 <body>
 
-<header>
-    <h1>State RP Computer Aided Dispatch</h1>
-    <div class="user-info">
-        Logged in: Officer Terry | Badge #1024
+<!-- LOGIN -->
+<div id="loginScreen">
+    <div class="card">
+        <h2>CAD Login</h2>
+        <input id="username" placeholder="Username"><br>
+        <select id="role">
+            <option value="Dispatcher">Dispatcher</option>
+            <option value="Officer">Officer</option>
+            <option value="Supervisor">Supervisor</option>
+        </select><br>
+        <button class="action" onclick="login()">Login</button>
     </div>
-</header>
+</div>
+
+<!-- APP -->
+<div id="app" class="hidden">
+
+<div class="topbar">
+    <div>State CAD System</div>
+    <div id="userInfo"></div>
+</div>
 
 <div class="layout">
 
-    <!-- Sidebar -->
-    <div class="sidebar">
-        <a href="#">Dashboard</a>
-        <a href="#">Active Calls</a>
-        <a href="#">Unit Status</a>
-        <a href="#">Civilian Search</a>
-        <a href="#">Vehicle Search</a>
-        <a href="#">BOLO / Warrants</a>
-        <a href="#">Reports</a>
-    </div>
-
-    <!-- Main Content -->
-    <div class="main">
-
-        <!-- Unit Status -->
-        <div class="card">
-            <h2>Unit Status</h2>
-            <table>
-                <tr>
-                    <th>Unit</th>
-                    <th>Officer</th>
-                    <th>Status</th>
-                    <th>Location</th>
-                </tr>
-                <tr>
-                    <td>1A-12</td>
-                    <td>T. Linville</td>
-                    <td class="status-available">10-8 Available</td>
-                    <td>Downtown</td>
-                </tr>
-                <tr>
-                    <td>1A-23</td>
-                    <td>J. Smith</td>
-                    <td class="status-busy">On Traffic Stop</td>
-                    <td>Route 45</td>
-                </tr>
-                <tr>
-                    <td>2B-04</td>
-                    <td>K. Adams</td>
-                    <td class="status-offline">10-7 Out of Service</td>
-                    <td>Station</td>
-                </tr>
-            </table>
-        </div>
-
-        <!-- Active Calls -->
-        <div class="card">
-            <h2>Active Calls</h2>
-            <table>
-                <tr>
-                    <th>Call ID</th>
-                    <th>Type</th>
-                    <th>Location</th>
-                    <th>Priority</th>
-                </tr>
-                <tr>
-                    <td>#1021</td>
-                    <td>Robbery in Progress</td>
-                    <td>24th & Main</td>
-                    <td style="color:#ef4444;">High</td>
-                </tr>
-                <tr>
-                    <td>#1022</td>
-                    <td>Disturbance</td>
-                    <td>Apartment Complex</td>
-                    <td style="color:#f59e0b;">Medium</td>
-                </tr>
-            </table>
-        </div>
-
-        <!-- Civilian Search -->
-        <div class="card">
-            <h2>Civilian Search</h2>
-            <input type="text" placeholder="Enter Name or ID">
-            <button class="button">Search</button>
-        </div>
-
-        <!-- Vehicle Search -->
-        <div class="card">
-            <h2>Vehicle Lookup</h2>
-            <input type="text" placeholder="Enter Plate Number">
-            <button class="button">Search</button>
-        </div>
-
-        <!-- BOLO -->
-        <div class="card">
-            <h2>BOLO / Warrants</h2>
-            <ul>
-                <li>John Doe – Armed Robbery – Active Warrant</li>
-                <li>Red Dodge Charger – Plate: RPX-221 – Stolen</li>
-            </ul>
-        </div>
-
-    </div>
-
+<div class="sidebar">
+    <button onclick="showPage('dashboard')">Dashboard</button>
+    <button onclick="showPage('calls')">Calls</button>
+    <button onclick="showPage('units')">Units</button>
+    <button onclick="showPage('mdt')">MDT</button>
+    <button onclick="showPage('bolo')">BOLO</button>
+    <button onclick="showPage('logs')">Audit Logs</button>
 </div>
 
+<div class="main">
+
+<!-- Dashboard -->
+<div id="dashboard" class="page card">
+    <h2>System Overview</h2>
+    <p>Active Calls: <span id="callCount"></span></p>
+    <p>Units Available: <span id="availableUnits"></span></p>
+</div>
+
+<!-- Calls -->
+<div id="calls" class="page card hidden">
+    <h2>Active Calls</h2>
+
+    <input id="callType" placeholder="Type">
+    <input id="callLocation" placeholder="Location">
+    <select id="callPriority">
+        <option>High</option>
+        <option>Medium</option>
+        <option>Low</option>
+    </select>
+    <button class="action" onclick="createCall()">Create Call</button>
+
+    <table id="callTable"></table>
+</div>
+
+<!-- Units -->
+<div id="units" class="page card hidden">
+    <h2>Unit Status</h2>
+
+    <input id="unitName" placeholder="Unit ID">
+    <button class="action" onclick="addUnit()">Add Unit</button>
+
+    <table id="unitTable"></table>
+</div>
+
+<!-- MDT -->
+<div id="mdt" class="page card hidden">
+    <h2>MDT Lookup</h2>
+    <input id="searchName" placeholder="Name">
+    <button class="action" onclick="searchCivilian()">Search</button>
+    <div id="mdtResult"></div>
+</div>
+
+<!-- BOLO -->
+<div id="bolo" class="page card hidden">
+    <h2>BOLO / Warrants</h2>
+    <input id="boloText" placeholder="BOLO description">
+    <button class="action" onclick="addBolo()">Add</button>
+    <ul id="boloList"></ul>
+</div>
+
+<!-- Logs -->
+<div id="logs" class="page card hidden">
+    <h2>Audit Log</h2>
+    <ul id="logList"></ul>
+</div>
+
+</div>
+</div>
+</div>
+
+<script>
+/* ====== DATABASE (LocalStorage) ====== */
+
+let data = JSON.parse(localStorage.getItem("cadData")) || {
+    calls: [],
+    units: [],
+    bolos: [],
+    logs: [],
+    civilians: [
+        {name:"John Doe", warrants:"None"},
+        {name:"Jane Smith", warrants:"Theft Warrant"}
+    ]
+};
+
+function save() {
+    localStorage.setItem("cadData", JSON.stringify(data));
+}
+
+function log(action) {
+    data.logs.unshift(new Date().toLocaleTimeString() + " - " + action);
+    save();
+    renderLogs();
+}
+
+/* ====== LOGIN ====== */
+
+let currentUser = null;
+
+function login() {
+    let name = document.getElementById("username").value;
+    let role = document.getElementById("role").value;
+    if(!name) return;
+
+    currentUser = {name, role};
+
+    document.getElementById("loginScreen").classList.add("hidden");
+    document.getElementById("app").classList.remove("hidden");
+    document.getElementById("userInfo").innerText =
+        name + " (" + role + ")";
+
+    log(name + " logged in");
+    renderAll();
+}
+
+/* ====== NAVIGATION ====== */
+
+function showPage(id){
+    document.querySelectorAll(".page").forEach(p=>p.classList.add("hidden"));
+    document.getElementById(id).classList.remove("hidden");
+}
+
+/* ====== CALLS ====== */
+
+function createCall(){
+    let type = callType.value;
+    let loc = callLocation.value;
+    let pr = callPriority.value;
+
+    let call = {
+        id: Date.now(),
+        type,
+        location: loc,
+        priority: pr,
+        status: "Open"
+    };
+
+    data.calls.push(call);
+    log("Call created: " + type + " at " + loc);
+    save();
+    renderCalls();
+}
+
+function renderCalls(){
+    let table = document.getElementById("callTable");
+    table.innerHTML = "<tr><th>ID</th><th>Type</th><th>Location</th><th>Priority</th><th>Status</th></tr>";
+
+    data.calls.forEach(c=>{
+        table.innerHTML += `
+        <tr>
+            <td>${c.id}</td>
+            <td>${c.type}</td>
+            <td>${c.location}</td>
+            <td class="priority-${c.priority.toLowerCase()}">${c.priority}</td>
+            <td>${c.status}</td>
+        </tr>`;
+    });
+
+    callCount.innerText = data.calls.length;
+}
+
+/* ====== UNITS ====== */
+
+function addUnit(){
+    let id = unitName.value;
+    if(!id) return;
+
+    data.units.push({
+        id,
+        status:"10-8 Available"
+    });
+
+    log("Unit added: " + id);
+    save();
+    renderUnits();
+}
+
+function renderUnits(){
+    let table = unitTable;
+    table.innerHTML = "<tr><th>Unit</th><th>Status</th><th>Change</th></tr>";
+
+    data.units.forEach((u,i)=>{
+        table.innerHTML += `
+        <tr>
+            <td>${u.id}</td>
+            <td>${u.status}</td>
+            <td>
+                <select onchange="changeStatus(${i}, this.value)">
+                    <option>10-8 Available</option>
+                    <option>10-6 Busy</option>
+                    <option>10-7 Out of Service</option>
+                    <option>10-23 On Scene</option>
+                </select>
+            </td>
+        </tr>`;
+    });
+
+    availableUnits.innerText =
+        data.units.filter(u=>u.status.includes("10-8")).length;
+}
+
+function changeStatus(i, status){
+    data.units[i].status = status;
+    log("Unit " + data.units[i].id + " status: " + status);
+    save();
+    renderUnits();
+}
+
+/* ====== MDT ====== */
+
+function searchCivilian(){
+    let name = searchName.value.toLowerCase();
+    let result = data.civilians.find(c=>c.name.toLowerCase().includes(name));
+
+    mdtResult.innerHTML = result ?
+        `<p>Name: ${result.name}<br>Warrants: ${result.warrants}</p>` :
+        "<p>No record found</p>";
+}
+
+/* ====== BOLO ====== */
+
+function addBolo(){
+    let text = boloText.value;
+    if(!text) return;
+
+    data.bolos.push(text);
+    log("BOLO added: " + text);
+    save();
+    renderBolos();
+}
+
+function renderBolos(){
+    boloList.innerHTML = "";
+    data.bolos.forEach(b=>{
+        boloList.innerHTML += "<li>"+b+"</li>";
+    });
+}
+
+/* ====== LOGS ====== */
+
+function renderLogs(){
+    logList.innerHTML = "";
+    data.logs.slice(0,50).forEach(l=>{
+        logList.innerHTML += "<li>"+l+"</li>";
+    });
+}
+
+/* ====== RENDER ALL ====== */
+
+function renderAll(){
+    renderCalls();
+    renderUnits();
+    renderBolos();
+    renderLogs();
+}
+
+</script>
 </body>
 </html>
