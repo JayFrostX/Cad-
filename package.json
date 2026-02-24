@@ -1,0 +1,21 @@
+{
+  "name": "cad--main",
+  "version": "1.0.0",
+  "description": "This Is a CAD system for learning purposes and by no means should be used for harmful or criminal behavior.",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "body-parser": "^2.2.2",
+    "cors": "^2.8.6",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "openai": "^6.24.0"
+  }
+}
