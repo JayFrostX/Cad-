@@ -1,260 +1,160 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Professional CAD Training System</title>
-
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Police CAD System</title>
+<!-- Leaflet.js for map -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <style>
-body {
-    margin: 0;
-    font-family: Arial;
-    background: #0f172a;
-    color: #e5e7eb;
-}
-
-.hidden { display: none; }
-
-.card {
-    background: #111827;
-    padding: 20px;
-    border-radius: 6px;
-    width: 300px;
-}
-
-#loginScreen {
-    height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.topbar {
-    background: #111827;
-    padding: 10px 20px;
-    display: flex;
-    justify-content: space-between;
-}
-
-.layout { display: flex; }
-
-.sidebar {
-    width: 200px;
-    background: #020617;
-    min-height: 100vh;
-}
-
-.sidebar button {
-    width: 100%;
-    background: none;
-    border: none;
-    color: white;
-    padding: 12px;
-    text-align: left;
-    cursor: pointer;
-}
-
-.main { flex: 1; padding: 20px; }
-
-input, select {
-    margin: 5px;
-    padding: 6px;
-    background: #020617;
-    border: 1px solid #1f2937;
-    color: white;
-}
-
-button.action {
-    background: #2563eb;
-    border: none;
-    padding: 6px 10px;
-    color: white;
-    cursor: pointer;
-}
-button.action:hover { background: #1d4ed8; }
-
-table { width: 100%; border-collapse: collapse; }
-th, td { padding: 6px; border-bottom: 1px solid #1f2937; }
+  body { margin: 0; font-family: Arial, sans-serif; display: flex; height: 100vh; }
+  #sidebar { width: 300px; background: #2c3e50; color: white; display: flex; flex-direction: column; padding: 10px; box-sizing: border-box; }
+  #sidebar h2 { margin-top: 0; }
+  #sidebar button { margin: 5px 0; padding: 10px; border: none; background: #34495e; color: white; cursor: pointer; }
+  #sidebar button:hover { background: #1abc9c; }
+  #main { flex: 1; display: flex; flex-direction: column; }
+  #calls, #units, #bolos { flex: 1; overflow-y: auto; padding: 10px; border-bottom: 1px solid #ccc; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { border: 1px solid #ccc; padding: 5px; text-align: left; }
+  #map { flex: 2; }
 </style>
 </head>
 <body>
 
-<!-- LOGIN -->
-<div id="loginScreen">
-    <div class="card">
-        <h2>CAD Login</h2>
-        <input id="username" placeholder="Username"><br>
-        <select id="role">
-            <option>Dispatcher</option>
-            <option>Officer</option>
-            <option>Supervisor</option>
-        </select><br>
-        <button class="action" id="loginBtn">Login</button>
-    </div>
+<div id="sidebar">
+  <h2>Police CAD</h2>
+  <button onclick="showSection('calls')">Calls</button>
+  <button onclick="showSection('units')">Units</button>
+  <button onclick="showSection('bolos')">BOLOs</button>
 </div>
 
-<!-- APP -->
-<div id="app" class="hidden">
-    <div class="topbar">
-        <div>State CAD System</div>
-        <div id="userInfo"></div>
-    </div>
+<div id="main">
+  <div id="calls">
+    <h3>Active Calls</h3>
+    <button onclick="addCall()">Add Call</button>
+    <table id="callsTable">
+      <thead><tr><th>ID</th><th>Type</th><th>Location</th><th>Status</th><th>Assign</th><th>Action</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
 
-    <div class="layout">
-        <div class="sidebar">
-            <button onclick="showPage('dashboard')">Dashboard</button>
-            <button onclick="showPage('calls')">Calls</button>
-            <button onclick="showPage('units')">Units</button>
-            <button onclick="showPage('logs')">Audit Logs</button>
-        </div>
+  <div id="units" style="display:none;">
+    <h3>Units</h3>
+    <table id="unitsTable">
+      <thead><tr><th>ID</th><th>Name</th><th>Status</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
 
-        <div class="main">
-            <div id="dashboard" class="page">
-                <h2>Dashboard</h2>
-                Active Calls: <span id="callCount">0</span><br>
-                Available Units: <span id="availableUnits">0</span>
-            </div>
+  <div id="bolos" style="display:none;">
+    <h3>BOLOs / Warrants</h3>
+    <button onclick="addBolo()">Add BOLO</button>
+    <table id="bolosTable">
+      <thead><tr><th>ID</th><th>Description</th><th>Status</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
 
-            <div id="calls" class="page hidden">
-                <h2>Calls</h2>
-                <input id="callType" placeholder="Type">
-                <input id="callLocation" placeholder="Location">
-                <button class="action" onclick="createCall()">Create Call</button>
-                <table id="callTable"></table>
-            </div>
-
-            <div id="units" class="page hidden">
-                <h2>Units</h2>
-                <input id="unitName" placeholder="Unit ID">
-                <button class="action" onclick="addUnit()">Add Unit</button>
-                <table id="unitTable"></table>
-            </div>
-
-            <div id="logs" class="page hidden">
-                <h2>Audit Logs</h2>
-                <ul id="logList"></ul>
-            </div>
-        </div>
-    </div>
+  <div id="map"></div>
 </div>
 
 <script>
-"use strict";
-
-/* ===== DATA ===== */
-let data = JSON.parse(localStorage.getItem("cadData")) || {
-    calls: [],
-    units: [],
-    logs: []
-};
-
-/* ===== ELEMENTS ===== */
-const loginBtn = document.getElementById("loginBtn");
-
-/* ===== LOGIN ===== */
-loginBtn.addEventListener("click", login);
-
-function login() {
-    const usernameInput = document.getElementById("username");
-    const roleInput = document.getElementById("role");
-
-    const name = usernameInput.value.trim();
-    const role = roleInput.value;
-
-    if (!name) { alert("Enter a username"); return; }
-
-    document.getElementById("loginScreen").classList.add("hidden");
-    document.getElementById("app").classList.remove("hidden");
-    document.getElementById("userInfo").innerText = name + " (" + role + ")";
-
-    log(`${name} logged in`);
-    renderAll();
+// Sections
+function showSection(section) {
+  document.getElementById('calls').style.display = 'none';
+  document.getElementById('units').style.display = 'none';
+  document.getElementById('bolos').style.display = 'none';
+  document.getElementById(section).style.display = 'block';
 }
 
-/* ===== NAVIGATION ===== */
-function showPage(id) {
-    document.querySelectorAll(".page").forEach(p => p.classList.add("hidden"));
-    document.getElementById(id).classList.remove("hidden");
+// Sample data
+let calls = [];
+let units = [
+  {id: 1, name: 'Unit 1', status: 'Available'},
+  {id: 2, name: 'Unit 2', status: 'Available'}
+];
+let bolos = [];
+
+const map = L.map('map').setView([39.7684, -86.1581], 12); // Indianapolis default
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap contributors' }).addTo(map);
+
+// Functions
+function addCall() {
+  const type = prompt("Enter call type (e.g., Traffic Stop, 911):");
+  const location = prompt("Enter location:");
+  if(!type || !location) return;
+  const id = calls.length + 1;
+  calls.push({id, type, location, status: 'Dispatched', assigned: ''});
+  renderCalls();
 }
 
-/* ===== LOGGING ===== */
-function log(message) {
-    data.logs.unshift(new Date().toLocaleTimeString() + " - " + message);
-    save();
-    renderLogs();
-}
-
-function save() {
-    localStorage.setItem("cadData", JSON.stringify(data));
-}
-
-/* ===== CALLS ===== */
-function createCall() {
-    const type = document.getElementById("callType").value;
-    const loc = document.getElementById("callLocation").value;
-    if (!type || !loc) return;
-
-    data.calls.push({ id: Date.now(), type, location: loc });
-    log(`Call created: ${type} at ${loc}`);
-    save();
+function assignUnit(callId) {
+  const unitId = prompt("Enter Unit ID to assign:");
+  const unit = units.find(u => u.id == unitId);
+  if(unit) {
+    const call = calls.find(c => c.id == callId);
+    call.assigned = unit.name;
+    call.status = 'En Route';
+    unit.status = 'Busy';
+    renderUnits();
     renderCalls();
+  }
+}
+
+function closeCall(callId) {
+  const call = calls.find(c => c.id == callId);
+  call.status = 'Closed';
+  const unit = units.find(u => u.name === call.assigned);
+  if(unit) unit.status = 'Available';
+  renderUnits();
+  renderCalls();
 }
 
 function renderCalls() {
-    const table = document.getElementById("callTable");
-    table.innerHTML = "<tr><th>ID</th><th>Type</th><th>Location</th></tr>";
-
-    data.calls.forEach(c => {
-        table.innerHTML += `<tr>
-            <td>${c.id}</td>
-            <td>${c.type}</td>
-            <td>${c.location}</td>
-        </tr>`;
-    });
-
-    document.getElementById("callCount").innerText = data.calls.length;
-}
-
-/* ===== UNITS ===== */
-function addUnit() {
-    const id = document.getElementById("unitName").value;
-    if (!id) return;
-
-    data.units.push({ id, status: "Available" });
-    log(`Unit added: ${id}`);
-    save();
-    renderUnits();
+  const tbody = document.querySelector('#callsTable tbody');
+  tbody.innerHTML = '';
+  calls.forEach(c => {
+    const row = document.createElement('tr');
+    row.innerHTML = `<td>${c.id}</td><td>${c.type}</td><td>${c.location}</td><td>${c.status}</td>
+    <td>${c.assigned || '<button onclick="assignUnit('+c.id+')">Assign</button>'}</td>
+    <td><button onclick="closeCall(${c.id})">Close</button></td>`;
+    tbody.appendChild(row);
+  });
 }
 
 function renderUnits() {
-    const table = document.getElementById("unitTable");
-    table.innerHTML = "<tr><th>Unit</th><th>Status</th></tr>";
-
-    data.units.forEach(u => {
-        table.innerHTML += `<tr>
-            <td>${u.id}</td>
-            <td>${u.status}</td>
-        </tr>`;
-    });
-
-    document.getElementById("availableUnits").innerText =
-        data.units.filter(u => u.status === "Available").length;
+  const tbody = document.querySelector('#unitsTable tbody');
+  tbody.innerHTML = '';
+  units.forEach(u => {
+    const row = document.createElement('tr');
+    row.innerHTML = `<td>${u.id}</td><td>${u.name}</td><td>${u.status}</td>`;
+    tbody.appendChild(row);
+  });
 }
 
-/* ===== LOGS ===== */
-function renderLogs() {
-    const list = document.getElementById("logList");
-    list.innerHTML = "";
-    data.logs.slice(0, 50).forEach(l => {
-        list.innerHTML += "<li>" + l + "</li>";
-    });
+function addBolo() {
+  const description = prompt("Enter BOLO/Warrant description:");
+  if(!description) return;
+  const id = bolos.length + 1;
+  bolos.push({id, description, status: 'Active'});
+  renderBolos();
 }
 
-/* ===== RENDER ALL ===== */
-function renderAll() {
-    renderCalls();
-    renderUnits();
-    renderLogs();
+function renderBolos() {
+  const tbody = document.querySelector('#bolosTable tbody');
+  tbody.innerHTML = '';
+  bolos.forEach(b => {
+    const row = document.createElement('tr');
+    row.innerHTML = `<td>${b.id}</td><td>${b.description}</td><td>${b.status}</td>`;
+    tbody.appendChild(row);
+  });
 }
+
+// Initial render
+renderCalls();
+renderUnits();
+renderBolos();
 </script>
 
 </body>
