@@ -29,8 +29,7 @@ body {
   color:var(--text);
 }
 
-/* ================= BOOT SCREEN ================= */
-
+/* BOOT */
 #bootScreen {
   position:fixed;
   width:100%;
@@ -42,8 +41,6 @@ body {
   z-index:9999;
   transition:opacity 0.5s ease;
 }
-
-.bootContainer { text-align:center; }
 
 .progressBar {
   width:500px;
@@ -69,8 +66,7 @@ body {
   letter-spacing:2px;
 }
 
-/* ================= LOGIN SCREEN ================= */
-
+/* LOGIN */
 #loginPage {
   height:100vh;
   background:#0b2a57;
@@ -78,76 +74,20 @@ body {
   flex-direction:column;
   align-items:center;
   justify-content:center;
-  animation:fadeIn 0.8s ease-in-out;
-}
-
-.loginHeader {
-  position:absolute;
-  top:40px;
-  text-align:center;
-  color:white;
-}
-
-.loginHeader h1 {
-  margin:0;
-  font-size:30px;
-  letter-spacing:2px;
-}
-
-.loginHeader p {
-  margin-top:5px;
-  font-size:14px;
-  opacity:0.9;
 }
 
 #loginBox {
   background:#d9d9d9;
-  padding:35px 40px;
+  padding:35px;
   width:420px;
   border-radius:4px;
   box-shadow:0 0 30px rgba(0,0,0,0.5);
-  text-align:left;
-  animation:slideUp 0.5s ease;
-}
-
-.badge {
-  width:90px;
-  height:110px;
-  margin:0 auto 15px auto;
-  background:gold;
-  clip-path: polygon(50% 0%, 85% 20%, 100% 60%, 50% 100%, 0% 60%, 15% 20%);
-  border:4px solid #b8860b;
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
-  align-items:center;
-  font-weight:bold;
-  color:black;
-  box-shadow:0 0 12px gold;
-  text-align:center;
-}
-
-.badge span { font-size:11px; }
-
-#loginBox h2 {
-  text-align:center;
-  margin-bottom:20px;
-  color:black;
-}
-
-#loginBox label {
-  font-weight:bold;
-  font-size:14px;
-  color:black;
 }
 
 #loginBox input {
   width:100%;
   padding:10px;
-  margin:6px 0 15px 0;
-  border:1px solid #aaa;
-  border-radius:3px;
-  font-size:14px;
+  margin:8px 0;
 }
 
 #loginBox button {
@@ -156,18 +96,10 @@ body {
   background:#2f4f9e;
   color:white;
   border:none;
-  border-radius:3px;
   cursor:pointer;
-  font-weight:bold;
 }
 
-#loginBox button:hover { background:#1f3c7a; }
-
-@keyframes fadeIn { from{opacity:0;} to{opacity:1;} }
-@keyframes slideUp { from{transform:translateY(25px);opacity:0;} to{transform:translateY(0);opacity:1;} }
-
-/* ================= CAD SYSTEM ================= */
-
+/* CAD */
 #cadSystem {
   display:none;
   height:100vh;
@@ -180,7 +112,11 @@ body {
   padding:15px;
 }
 
-#main { flex:1; display:flex; flex-direction:column; }
+#main {
+  flex:1;
+  display:flex;
+  flex-direction:column;
+}
 
 .section {
   flex:1;
@@ -219,7 +155,7 @@ th, td {
 
 #messages {
   flex:1;
-  overflow-y:auto;
+  overflow:auto;
   padding:10px;
   background:#ddd;
   color:black;
@@ -232,9 +168,9 @@ th, td {
 
 <body>
 
-<!-- BOOT SCREEN -->
+<!-- BOOT -->
 <div id="bootScreen">
-  <div class="bootContainer">
+  <div>
     <div class="progressBar">
       <div class="progressFill" id="progressFill"></div>
     </div>
@@ -244,26 +180,10 @@ th, td {
 
 <!-- LOGIN -->
 <div id="loginPage">
-  <div class="loginHeader">
-    <h1>ROCKFORD CITY POLICE DEPT</h1>
-    <p>Protecting Rockford City</p>
-  </div>
-
   <div id="loginBox">
-    <div class="badge">
-      <div>ROCKFORD</div>
-      <span>POLICE</span>
-      <span>CITY</span>
-    </div>
-
-    <h2>Secure Terminal Access</h2>
-
-    <label>Username:</label>
-    <input id="loginUser" autocomplete="off">
-
-    <label>Password:</label>
-    <input type="password" id="loginPass">
-
+    <h2>Rockford Police CAD</h2>
+    <input id="loginUser" placeholder="Username">
+    <input type="password" id="loginPass" placeholder="Password">
     <button onclick="login()">Login</button>
   </div>
 </div>
@@ -276,7 +196,7 @@ th, td {
     <button onclick="showSection('units')">Units</button>
     <button onclick="showSection('warrants')">Warrants</button>
     <button onclick="showSection('arrests')">Arrests</button>
-    <button onclick="toggleTheme()">Toggle Dark/Light</button>
+    <button onclick="toggleTheme()">Toggle Theme</button>
   </div>
 
   <div id="main">
@@ -285,9 +205,7 @@ th, td {
       <h3>Calls</h3>
       <button onclick="addCall()">Add</button>
       <table>
-        <thead>
-          <tr><th>ID</th><th>Type</th><th>Location</th><th>Delete</th></tr>
-        </thead>
+        <thead><tr><th>ID</th><th>Type</th><th>Location</th><th>Delete</th></tr></thead>
         <tbody id="callsBody"></tbody>
       </table>
     </div>
@@ -296,9 +214,7 @@ th, td {
       <h3>Units</h3>
       <button onclick="addUnit()">Add</button>
       <table>
-        <thead>
-          <tr><th>ID</th><th>Name</th><th>Delete</th></tr>
-        </thead>
+        <thead><tr><th>ID</th><th>Name</th><th>Delete</th></tr></thead>
         <tbody id="unitsBody"></tbody>
       </table>
     </div>
@@ -307,9 +223,7 @@ th, td {
       <h3>Warrants</h3>
       <button onclick="addWarrant()">Add</button>
       <table>
-        <thead>
-          <tr><th>ID</th><th>Name</th><th>Reason</th><th>Delete</th></tr>
-        </thead>
+        <thead><tr><th>ID</th><th>Name</th><th>Reason</th><th>Delete</th></tr></thead>
         <tbody id="warrantsBody"></tbody>
       </table>
     </div>
@@ -318,9 +232,7 @@ th, td {
       <h3>Arrests</h3>
       <button onclick="addArrest()">Add</button>
       <table>
-        <thead>
-          <tr><th>ID</th><th>Name</th><th>Reason</th><th>Delete</th></tr>
-        </thead>
+        <thead><tr><th>ID</th><th>Name</th><th>Reason</th><th>Delete</th></tr></thead>
         <tbody id="arrestsBody"></tbody>
       </table>
     </div>
@@ -338,68 +250,49 @@ th, td {
 
 <script>
 
-/* ================= BOOT SEQUENCE ================= */
-
+/* BOOT */
 window.onload = function(){
   const fill = document.getElementById("progressFill");
   let width = 0;
-
   const interval = setInterval(() => {
     width += 10;
     fill.style.width = width + "%";
-
     if(width >= 100){
       clearInterval(interval);
       setTimeout(() => {
-        document.getElementById("bootScreen").style.opacity = "0";
-        setTimeout(()=>{
-          document.getElementById("bootScreen").style.display = "none";
-        },500);
+        document.getElementById("bootScreen").style.display="none";
       },400);
     }
   },200);
 };
 
-/* FIREBASE CONFIG */
+/* FIREBASE */
 const firebaseConfig = {
   apiKey: "AIzaSyAtbzUhg8vT040z9iNEakF_kqEvr7YkPM4",
-
   authDomain: "police-cad-86ba9.firebaseapp.com",
-
-  projectId: "police-cad-86ba9",
-
-  storageBucket: "police-cad-86ba9.firebasestorage.app",
-
-  messagingSenderId: "687205548242",
-
-  appId: "1:687205548242:web:978717f8cf88e239fded0b",
-
-  measurementId: "G-KKCPSCCDE0"
-
+  databaseURL: "https://police-cad-86ba9-default-rtdb.firebaseio.com",
+  projectId: "police-cad-86ba9"
 };
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
+/* REFERENCES */
+const callsRef = db.ref("calls");
+const unitsRef = db.ref("units");
+const warrantsRef = db.ref("warrants");
+const arrestsRef = db.ref("arrests");
+const chatRef = db.ref("chat");
+
+let currentUser="";
+
 /* LOGIN */
-let currentUser = "";
-
 function login(){
-  const user = document.getElementById("loginUser").value.trim();
-  currentUser = user || "Officer";
-
+  const user=document.getElementById("loginUser").value.trim();
+  currentUser=user||"Officer";
   document.getElementById("loginPage").style.display="none";
   document.getElementById("cadSystem").style.display="flex";
 }
-
-document.addEventListener("keydown", function(e){
-  if(e.key==="Enter" && document.getElementById("loginPage").style.display!=="none"){
-    login();
-  }
-});
-
-/* THEME */
-function toggleTheme(){ document.body.classList.toggle("light"); }
 
 /* SECTIONS */
 function showSection(id){
@@ -407,111 +300,108 @@ function showSection(id){
   document.getElementById(id).classList.add("active");
 }
 
-/* DELETE */
-function deleteItem(array,id,render){
-  const i=array.findIndex(x=>x.id===id);
-  if(i>-1){array.splice(i,1);render();}
-}
+function toggleTheme(){ document.body.classList.toggle("light"); }
 
 /* CALLS */
-let calls=[];
 function addCall(){
   const type=prompt("Type:");
   const loc=prompt("Location:");
   if(!type||!loc)return;
-  calls.push({id:Date.now(),type,loc});
-  renderCalls();
-}
-function renderCalls(){
-  callsBody.innerHTML="";
-  calls.forEach(c=>{
-    callsBody.innerHTML+=`
-    <tr>
-      <td>${c.id}</td>
-      <td>${c.type}</td>
-      <td>${c.loc}</td>
-      <td><button class="deleteBtn" onclick="deleteItem(calls,${c.id},renderCalls)">X</button></td>
-    </tr>`;
-  });
+  callsRef.push({type,loc});
 }
 
+callsRef.on("value", snap=>{
+  callsBody.innerHTML="";
+  snap.forEach(child=>{
+    const data=child.val();
+    const key=child.key;
+    callsBody.innerHTML+=`
+    <tr>
+      <td>${key}</td>
+      <td>${data.type}</td>
+      <td>${data.loc}</td>
+      <td><button class="deleteBtn" onclick="callsRef.child('${key}').remove()">X</button></td>
+    </tr>`;
+  });
+});
+
 /* UNITS */
-let units=[];
 function addUnit(){
   const name=prompt("Name:");
   if(!name)return;
-  units.push({id:Date.now(),name});
-  renderUnits();
-}
-function renderUnits(){
-  unitsBody.innerHTML="";
-  units.forEach(u=>{
-    unitsBody.innerHTML+=`
-    <tr>
-      <td>${u.id}</td>
-      <td>${u.name}</td>
-      <td><button class="deleteBtn" onclick="deleteItem(units,${u.id},renderUnits)">X</button></td>
-    </tr>`;
-  });
+  unitsRef.push({name});
 }
 
+unitsRef.on("value", snap=>{
+  unitsBody.innerHTML="";
+  snap.forEach(child=>{
+    const data=child.val();
+    const key=child.key;
+    unitsBody.innerHTML+=`
+    <tr>
+      <td>${key}</td>
+      <td>${data.name}</td>
+      <td><button class="deleteBtn" onclick="unitsRef.child('${key}').remove()">X</button></td>
+    </tr>`;
+  });
+});
+
 /* WARRANTS */
-let warrants=[];
 function addWarrant(){
   const name=prompt("Name:");
   const reason=prompt("Reason:");
   if(!name||!reason)return;
-  warrants.push({id:Date.now(),name,reason});
-  renderWarrants();
-}
-function renderWarrants(){
-  warrantsBody.innerHTML="";
-  warrants.forEach(w=>{
-    warrantsBody.innerHTML+=`
-    <tr>
-      <td>${w.id}</td>
-      <td>${w.name}</td>
-      <td>${w.reason}</td>
-      <td><button class="deleteBtn" onclick="deleteItem(warrants,${w.id},renderWarrants)">X</button></td>
-    </tr>`;
-  });
+  warrantsRef.push({name,reason});
 }
 
+warrantsRef.on("value", snap=>{
+  warrantsBody.innerHTML="";
+  snap.forEach(child=>{
+    const data=child.val();
+    const key=child.key;
+    warrantsBody.innerHTML+=`
+    <tr>
+      <td>${key}</td>
+      <td>${data.name}</td>
+      <td>${data.reason}</td>
+      <td><button class="deleteBtn" onclick="warrantsRef.child('${key}').remove()">X</button></td>
+    </tr>`;
+  });
+});
+
 /* ARRESTS */
-let arrests=[];
 function addArrest(){
   const name=prompt("Name:");
   const reason=prompt("Reason:");
   if(!name||!reason)return;
-  arrests.push({id:Date.now(),name,reason});
-  renderArrests();
+  arrestsRef.push({name,reason});
 }
-function renderArrests(){
+
+arrestsRef.on("value", snap=>{
   arrestsBody.innerHTML="";
-  arrests.forEach(a=>{
+  snap.forEach(child=>{
+    const data=child.val();
+    const key=child.key;
     arrestsBody.innerHTML+=`
     <tr>
-      <td>${a.id}</td>
-      <td>${a.name}</td>
-      <td>${a.reason}</td>
-      <td><button class="deleteBtn" onclick="deleteItem(arrests,${a.id},renderArrests)">X</button></td>
+      <td>${key}</td>
+      <td>${data.name}</td>
+      <td>${data.reason}</td>
+      <td><button class="deleteBtn" onclick="arrestsRef.child('${key}').remove()">X</button></td>
     </tr>`;
   });
-}
+});
 
 /* CHAT */
-const chatRef = db.ref("rockfordChat");
-
 function sendMessage(){
   const text=document.getElementById("chatInput").value.trim();
   if(!text)return;
-
-  chatRef.push({ user:currentUser, message:text });
+  chatRef.push({user:currentUser,message:text});
   document.getElementById("chatInput").value="";
 }
 
-chatRef.on("child_added", snapshot=>{
-  const data=snapshot.val();
+chatRef.on("child_added", snap=>{
+  const data=snap.val();
   messages.innerHTML+=`<div><b>${data.user}:</b> ${data.message}</div>`;
   messages.scrollTop=messages.scrollHeight;
 });
