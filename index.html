@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>State CAD System</title>
+<title>Professional CAD Training System</title>
 
 <style>
 body {
@@ -70,6 +70,10 @@ button.action {
     color: white;
     cursor: pointer;
 }
+button.action:hover { background: #1d4ed8; }
+
+table { width: 100%; border-collapse: collapse; }
+th, td { padding: 6px; border-bottom: 1px solid #1f2937; }
 </style>
 </head>
 <body>
@@ -79,110 +83,127 @@ button.action {
     <div class="card">
         <h2>CAD Login</h2>
         <input id="username" placeholder="Username"><br>
-
         <select id="role">
             <option>Dispatcher</option>
             <option>Officer</option>
             <option>Supervisor</option>
         </select><br>
-
-        <button class="action" onclick="login()">Login</button>
+        <button class="action" id="loginBtn">Login</button>
     </div>
 </div>
 
 <!-- APP -->
 <div id="app" class="hidden">
-
-<div class="topbar">
-    <div>State CAD</div>
-    <div id="userInfo"></div>
-</div>
-
-<div class="layout">
-    <div class="sidebar">
-        <button onclick="showPage('dashboard')">Dashboard</button>
-        <button onclick="showPage('calls')">Calls</button>
-        <button onclick="showPage('units')">Units</button>
+    <div class="topbar">
+        <div>State CAD System</div>
+        <div id="userInfo"></div>
     </div>
 
-    <div class="main">
-
-        <div id="dashboard" class="page">
-            <h2>Dashboard</h2>
-            Active Calls: <span id="callCount">0</span><br>
-            Available Units: <span id="availableUnits">0</span>
+    <div class="layout">
+        <div class="sidebar">
+            <button onclick="showPage('dashboard')">Dashboard</button>
+            <button onclick="showPage('calls')">Calls</button>
+            <button onclick="showPage('units')">Units</button>
+            <button onclick="showPage('logs')">Audit Logs</button>
         </div>
 
-        <div id="calls" class="page hidden">
-            <h2>Calls</h2>
-            <input id="callType" placeholder="Type">
-            <input id="callLocation" placeholder="Location">
-            <button class="action" onclick="createCall()">Create</button>
-            <table id="callTable"></table>
-        </div>
+        <div class="main">
+            <div id="dashboard" class="page">
+                <h2>Dashboard</h2>
+                Active Calls: <span id="callCount">0</span><br>
+                Available Units: <span id="availableUnits">0</span>
+            </div>
 
-        <div id="units" class="page hidden">
-            <h2>Units</h2>
-            <input id="unitName" placeholder="Unit ID">
-            <button class="action" onclick="addUnit()">Add</button>
-            <table id="unitTable"></table>
-        </div>
+            <div id="calls" class="page hidden">
+                <h2>Calls</h2>
+                <input id="callType" placeholder="Type">
+                <input id="callLocation" placeholder="Location">
+                <button class="action" onclick="createCall()">Create Call</button>
+                <table id="callTable"></table>
+            </div>
 
+            <div id="units" class="page hidden">
+                <h2>Units</h2>
+                <input id="unitName" placeholder="Unit ID">
+                <button class="action" onclick="addUnit()">Add Unit</button>
+                <table id="unitTable"></table>
+            </div>
+
+            <div id="logs" class="page hidden">
+                <h2>Audit Logs</h2>
+                <ul id="logList"></ul>
+            </div>
+        </div>
     </div>
-</div>
 </div>
 
 <script>
 "use strict";
 
+/* ===== DATA ===== */
 let data = JSON.parse(localStorage.getItem("cadData")) || {
     calls: [],
-    units: []
+    units: [],
+    logs: []
 };
 
-function save(){
-    localStorage.setItem("cadData", JSON.stringify(data));
-}
+/* ===== ELEMENTS ===== */
+const loginBtn = document.getElementById("loginBtn");
 
-/* LOGIN */
-function login(){
-    const name = document.getElementById("username").value.trim();
-    const role = document.getElementById("role").value;
+/* ===== LOGIN ===== */
+loginBtn.addEventListener("click", login);
 
-    if(!name){
-        alert("Enter username");
-        return;
-    }
+function login() {
+    const usernameInput = document.getElementById("username");
+    const roleInput = document.getElementById("role");
+
+    const name = usernameInput.value.trim();
+    const role = roleInput.value;
+
+    if (!name) { alert("Enter a username"); return; }
 
     document.getElementById("loginScreen").classList.add("hidden");
     document.getElementById("app").classList.remove("hidden");
     document.getElementById("userInfo").innerText = name + " (" + role + ")";
 
+    log(`${name} logged in`);
     renderAll();
 }
 
-/* NAV */
-function showPage(id){
+/* ===== NAVIGATION ===== */
+function showPage(id) {
     document.querySelectorAll(".page").forEach(p => p.classList.add("hidden"));
     document.getElementById(id).classList.remove("hidden");
 }
 
-/* CALLS */
-function createCall(){
+/* ===== LOGGING ===== */
+function log(message) {
+    data.logs.unshift(new Date().toLocaleTimeString() + " - " + message);
+    save();
+    renderLogs();
+}
+
+function save() {
+    localStorage.setItem("cadData", JSON.stringify(data));
+}
+
+/* ===== CALLS ===== */
+function createCall() {
     const type = document.getElementById("callType").value;
     const loc = document.getElementById("callLocation").value;
-    if(!type || !loc) return;
+    if (!type || !loc) return;
 
     data.calls.push({ id: Date.now(), type, location: loc });
+    log(`Call created: ${type} at ${loc}`);
     save();
     renderCalls();
 }
 
-function renderCalls(){
+function renderCalls() {
     const table = document.getElementById("callTable");
     table.innerHTML = "<tr><th>ID</th><th>Type</th><th>Location</th></tr>";
 
-    data.calls.forEach(c=>{
+    data.calls.forEach(c => {
         table.innerHTML += `<tr>
             <td>${c.id}</td>
             <td>${c.type}</td>
@@ -193,21 +214,22 @@ function renderCalls(){
     document.getElementById("callCount").innerText = data.calls.length;
 }
 
-/* UNITS */
-function addUnit(){
+/* ===== UNITS ===== */
+function addUnit() {
     const id = document.getElementById("unitName").value;
-    if(!id) return;
+    if (!id) return;
 
-    data.units.push({ id, status:"Available" });
+    data.units.push({ id, status: "Available" });
+    log(`Unit added: ${id}`);
     save();
     renderUnits();
 }
 
-function renderUnits(){
+function renderUnits() {
     const table = document.getElementById("unitTable");
     table.innerHTML = "<tr><th>Unit</th><th>Status</th></tr>";
 
-    data.units.forEach(u=>{
+    data.units.forEach(u => {
         table.innerHTML += `<tr>
             <td>${u.id}</td>
             <td>${u.status}</td>
@@ -215,12 +237,23 @@ function renderUnits(){
     });
 
     document.getElementById("availableUnits").innerText =
-        data.units.filter(u=>u.status==="Available").length;
+        data.units.filter(u => u.status === "Available").length;
 }
 
-function renderAll(){
+/* ===== LOGS ===== */
+function renderLogs() {
+    const list = document.getElementById("logList");
+    list.innerHTML = "";
+    data.logs.slice(0, 50).forEach(l => {
+        list.innerHTML += "<li>" + l + "</li>";
+    });
+}
+
+/* ===== RENDER ALL ===== */
+function renderAll() {
     renderCalls();
     renderUnits();
+    renderLogs();
 }
 </script>
 
