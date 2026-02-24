@@ -5,11 +5,6 @@
 <title>Police CAD v3</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js"></script>
-
 <style>
 body {
   margin:0;
@@ -20,7 +15,6 @@ body {
   height:100vh;
 }
 
-/* Glass effect */
 .glass {
   background:rgba(255,255,255,0.08);
   backdrop-filter:blur(10px);
@@ -28,7 +22,6 @@ body {
   padding:10px;
 }
 
-/* Sidebar */
 #sidebar {
   width:220px;
   padding:10px;
@@ -45,7 +38,6 @@ body {
   cursor:pointer;
 }
 
-/* Main */
 #main {
   flex:1;
   display:flex;
@@ -73,11 +65,11 @@ td, th {
 .status-onscene { color:#3498db; }
 .status-busy { color:#e74c3c; }
 
-/* Chat */
 #chat {
   height:200px;
   display:flex;
   flex-direction:column;
+  margin-top:10px;
 }
 #messages {
   flex:1;
@@ -85,11 +77,6 @@ td, th {
 }
 .message {
   margin:4px 0;
-}
-
-/* Drag */
-.draggable {
-  cursor:grab;
 }
 </style>
 </head>
@@ -137,49 +124,32 @@ td, th {
 
 <script type="module">
 
-// 🔥 REPLACE WITH YOUR FIREBASE CONFIG
-// Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
-
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyAtbzUhg8vT040z9iNEakF_kqEvr7YkPM4",
-  authDomain: "police-cad-86ba9.firebaseapp.com",
-  projectId: "police-cad-86ba9",
-  storageBucket: "police-cad-86ba9.firebasestorage.app",
-  messagingSenderId: "687205548242",
-  appId: "1:687205548242:web:978717f8cf88e239fded0b",
-  measurementId: "G-KKCPSCCDE0"
-};
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
-};
-
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getFirestore, collection, addDoc, onSnapshot, updateDoc, doc } 
 from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { getAuth, signInAnonymously } 
 from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
+const firebaseConfig = {
+  apiKey: "AIzaSyAtbzUhg8vT040z9iNEakF_kqEvr7YkPM4",
+  authDomain: "police-cad-86ba9.firebaseapp.com",
+  projectId: "police-cad-86ba9",
+  storageBucket: "police-cad-86ba9.appspot.com",
+  messagingSenderId: "687205548242",
+  appId: "1:687205548242:web:978717f8cf88e239fded0b"
+};
+
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-const auth = getAuth();
+const auth = getAuth(app);
 
 await signInAnonymously(auth);
 
-let currentSection="calls";
-
-function showSection(id){
+/* Section Switching */
+window.showSection = function(id){
   document.querySelectorAll(".section").forEach(s=>s.style.display="none");
   document.getElementById(id).style.display="block";
-}
-
+};
 showSection("calls");
 
 /* REAL-TIME LISTENERS */
@@ -190,7 +160,8 @@ onSnapshot(collection(db,"calls"), snapshot=>{
   snapshot.forEach(docSnap=>{
     const c=docSnap.data();
     body.innerHTML+=`
-      <tr>
+      <tr ondragover="event.preventDefault()" 
+          ondrop="assignUnit(event,'${docSnap.id}')">
         <td>${docSnap.id}</td>
         <td>${c.type}</td>
         <td>${c.location}</td>
@@ -205,8 +176,8 @@ onSnapshot(collection(db,"units"), snapshot=>{
   snapshot.forEach(docSnap=>{
     const u=docSnap.data();
     body.innerHTML+=`
-      <tr draggable="true" class="draggable"
-        ondragstart="dragUnit(event,'${docSnap.id}')">
+      <tr draggable="true" 
+          ondragstart="dragUnit(event,'${docSnap.id}')">
         <td>${docSnap.id}</td>
         <td>${u.name}</td>
         <td class="status-${u.status}">${u.status}</td>
@@ -216,7 +187,7 @@ onSnapshot(collection(db,"units"), snapshot=>{
 
 /* Add Data */
 
-window.addCall=async()=>{
+window.addCall = async function(){
   const type=prompt("Call Type");
   const location=prompt("Location");
   if(!type||!location) return;
@@ -225,7 +196,7 @@ window.addCall=async()=>{
   });
 };
 
-window.addUnit=async()=>{
+window.addUnit = async function(){
   const name=prompt("Unit Name");
   if(!name) return;
   await addDoc(collection(db,"units"),{
@@ -235,18 +206,13 @@ window.addUnit=async()=>{
 
 /* Drag & Assign */
 
-window.dragUnit=(e,id)=>{
+window.dragUnit = function(e,id){
   e.dataTransfer.setData("unitId",id);
 };
 
-document.getElementById("callsBody").ondragover=e=>e.preventDefault();
-
-document.getElementById("callsBody").ondrop=async(e)=>{
+window.assignUnit = async function(e,callId){
   e.preventDefault();
   const unitId=e.dataTransfer.getData("unitId");
-  const callRow=e.target.closest("tr");
-  if(!callRow) return;
-  const callId=callRow.children[0].innerText;
 
   await updateDoc(doc(db,"calls",callId),{
     assigned:unitId
@@ -268,7 +234,7 @@ onSnapshot(collection(db,"chat"), snapshot=>{
   });
 });
 
-window.sendMessage=async()=>{
+window.sendMessage = async function(){
   const input=document.getElementById("chatInput");
   if(!input.value.trim()) return;
   await addDoc(collection(db,"chat"),{
