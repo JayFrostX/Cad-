@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Training CAD System</title>
+<style>
+body {
+    font-family: Arial;
+    background: #0b1220;
+    color: white;
+    margin: 0;
+}
+
+header {
+    background: #1e3a8a;
+    padding: 15px;
+    text-align: center;
+    font-size: 24px;
+}
+
+.container {
+    display: flex;
+    height: calc(100vh - 60px);
+}
+
+.panel {
+    flex: 1;
+    padding: 15px;
+    border-right: 1px solid #1f2937;
+    overflow-y: auto;
+}
+
+h2 { margin-top: 0; }
+
+input, select, textarea, button {
+    width: 100%;
+    margin-top: 5px;
+    margin-bottom: 10px;
+    padding: 8px;
+    border-radius: 5px;
+    border: none;
+}
+
+button {
+    background: #2563eb;
+    color: white;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #1d4ed8;
+}
+
+.card {
+    background: #111827;
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 6px;
+}
+
+.status {
+    font-weight: bold;
+}
+</style>
+</head>
+<body>
+
+<header>Training CAD System (Learning Only)</header>
+
+<div class="container">
+
+<!-- Officer Panel -->
+<div class="panel">
+    <h2>Unit Status</h2>
+    <input id="unitName" placeholder="Unit Name (e.g. 1A-12)">
+    <select id="unitStatus">
+        <option>Available</option>
+        <option>Busy</option>
+        <option>En Route</option>
+        <option>On Scene</option>
+    </select>
+    <button onclick="updateUnit()">Update Status</button>
+
+    <div id="units"></div>
+</div>
+
+<!-- Call Creation -->
+<div class="panel">
+    <h2>Create Call</h2>
+    <input id="callType" placeholder="Call Type (e.g. Traffic Stop)">
+    <input id="callLocation" placeholder="Location">
+    <textarea id="callNotes" placeholder="Notes"></textarea>
+    <button onclick="createCall()">Create Call</button>
+</div>
+
+<!-- Active Calls -->
+<div class="panel">
+    <h2>Active Calls</h2>
+    <div id="calls"></div>
+</div>
+
+</div>
+
+<script>
+let units = [];
+let calls = [];
+
+function updateUnit() {
+    const name = document.getElementById("unitName").value;
+    const status = document.getElementById("unitStatus").value;
+    if (!name) return;
+
+    const existing = units.find(u => u.name === name);
+    if (existing) {
+        existing.status = status;
+    } else {
+        units.push({ name, status });
+    }
+
+    renderUnits();
+}
+
+function renderUnits() {
+    const container = document.getElementById("units");
+    container.innerHTML = "";
+    units.forEach(u => {
+        container.innerHTML += `
+            <div class="card">
+                <div>${u.name}</div>
+                <div class="status">${u.status}</div>
+            </div>
+        `;
+    });
+}
+
+function createCall() {
+    const type = document.getElementById("callType").value;
+    const location = document.getElementById("callLocation").value;
+    const notes = document.getElementById("callNotes").value;
+    if (!type || !location) return;
+
+    calls.push({
+        id: Date.now(),
+        type,
+        location,
+        notes
+    });
+
+    renderCalls();
+}
+
+function renderCalls() {
+    const container = document.getElementById("calls");
+    container.innerHTML = "";
+    calls.forEach(c => {
+        container.innerHTML += `
+            <div class="card">
+                <strong>${c.type}</strong><br>
+                Location: ${c.location}<br>
+                Notes: ${c.notes}<br>
+                <button onclick="closeCall(${c.id})">Close</button>
+            </div>
+        `;
+    });
+}
+
+function closeCall(id) {
+    calls = calls.filter(c => c.id !== id);
+    renderCalls();
+}
+</script>
+
+</body>
+</html>
